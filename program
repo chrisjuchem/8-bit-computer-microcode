@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+arduino-cli compile eeprom-programmer/ --upload && minicom -D /dev/ttyUSB0 -b 115200
+
