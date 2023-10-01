@@ -11,6 +11,8 @@ sudo chmod a+rw /dev/ttyUSB0
 arduino-cli core install arduino:avr
 
 sudo apt-get install minicom
+
+rustup override set nightly
 ```
 
 optional: 
