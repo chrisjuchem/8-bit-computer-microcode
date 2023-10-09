@@ -1,3 +1,4 @@
 microcode/target/
+emulator/target/
 generated
 eeprom-programmer/eeprom-programmer.ino

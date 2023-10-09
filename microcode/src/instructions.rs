@@ -1,4 +1,4 @@
-use crate::Operations;
+use crate::operations::Operations;
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone, Copy)]
@@ -6,6 +6,9 @@ pub struct Instruction([Operations; 8]);
 impl Instruction {
     pub fn steps(self) -> impl Iterator<Item = Operations> {
         self.0.into_iter()
+    }
+    pub fn step(&self, stp: usize) -> Operations {
+        self.0[stp]
     }
 }
 impl Display for Instruction {

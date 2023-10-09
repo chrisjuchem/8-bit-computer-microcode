@@ -1,13 +1,9 @@
 #![feature(const_option)]
 #![feature(const_trait_impl)]
 
-mod instructions;
-mod operations;
-mod programs;
-
-use crate::instructions::Instructions;
-use crate::programs::{Program, ADDITION, EMPTY};
-use operations::Operations;
+use microcode::instructions::Instructions;
+use microcode::operations::Operations;
+use microcode::programs::{Program, ADDITION, EMPTY};
 use std::fmt::Display;
 use std::fs::File;
 use std::io::{Error, Write};
@@ -40,14 +36,7 @@ fn write_microcode() {
 
 fn write_program<const N: usize>(prog: Program<N>) {
     let mut bytes = [0; 256];
-    let mut bytes_ref = &mut bytes[..];
-
-    for instr in prog.instructions {
-        bytes_ref = instr.write_bytes(bytes_ref)
-    }
-    while bytes_ref.len() > 0 {
-        bytes_ref = Instructions::NOOP.write_bytes(bytes_ref);
-    }
+    prog.copy_into(&mut bytes);
 
     let f = File::create(format!("../generated/programs/{}.txt", prog.name)).unwrap();
     write_bytes(bytes, f).unwrap();
