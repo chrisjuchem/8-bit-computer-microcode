@@ -11,10 +11,11 @@ generated/microcode.txt $(foreach program,$(programs),generated/programs/$(progr
 
 
 # TODO: add programs as dependencies
-eeprom-programmer/eeprom-programmer.ino: \
+eeprom-programmer/eeprom-programmer-%.ino: \
 		eeprom-programmer/eeprom-programmer.ino.j2 \
-		generated/microcode.txt \
-		generated/*.chipconf
+		generated/microcode.txt
+	rm -f eeprom-programmer/eeprom-programmer-*.ino
+
 	# TODO customize programs
 	high_chip=$(high_chip) \
 	rom_chip=$(rom_chip) \
@@ -27,7 +28,7 @@ eeprom-programmer/eeprom-programmer.ino: \
 	prog5=$$(cat generated/programs/empty.txt) \
 	prog6=$$(cat generated/programs/empty.txt) \
 	prog7=$$(cat generated/programs/empty.txt) \
-	j2 $@.j2 -o $@
+	j2 eeprom-programmer/eeprom-programmer.ino.j2 -o $@
 
 
 generated/%.chipconf:
@@ -40,11 +41,10 @@ microcode-low: high_chip=false
 rom: rom_chip=true
 rom: high_chip=false
 
-microcode-high microcode-low rom:  %: generated/%.chipconf eeprom-programmer/eeprom-programmer.ino
+microcode-high microcode-low rom:  %: eeprom-programmer/eeprom-programmer-%.ino
 	./program
 
 clean:
-	rm eeprom-programmer/eeprom-programmer.ino
-	rm generated/*.chipconf
-	rm generated/microcode.txt
-	rm generated/programs/*.txt
+	rm -f eeprom-programmer/eeprom-programmer-*.ino
+	rm -f generated/microcode.txt
+	rm -f generated/programs/*.txt
