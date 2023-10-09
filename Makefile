@@ -1,6 +1,7 @@
 SHELL=bash
 
 programs = addition \
+	debug \
 	empty
 
 generated/microcode.txt $(foreach program,$(programs),generated/programs/$(program).txt) &: microcode/*
@@ -18,7 +19,7 @@ eeprom-programmer/eeprom-programmer.ino: \
 	high_chip=$(high_chip) \
 	rom_chip=$(rom_chip) \
 	microcode=$$(cat generated/microcode.txt) \
-	prog0=$$(cat generated/programs/addition.txt) \
+	prog0=$$(cat generated/programs/debug.txt) \
 	prog1=$$(cat generated/programs/empty.txt) \
 	prog2=$$(cat generated/programs/empty.txt) \
 	prog3=$$(cat generated/programs/empty.txt) \

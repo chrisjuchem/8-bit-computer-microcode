@@ -28,9 +28,10 @@ fn write_microcode() {
 
     for i in 0..=255 {
         let code = Instructions::microcode(i).unwrap_or(noop);
-        code.steps()
-            .enumerate()
-            .for_each(|(n, instr)| buf[n * 256 + (i as usize)] = instr)
+        code.steps().enumerate().for_each(|(n, instr)| {
+            instr.validate().unwrap();
+            buf[n * 256 + (i as usize)] = instr.machine_bits();
+        })
     }
 
     let f = File::create("../generated/microcode.txt").unwrap();
@@ -56,6 +57,14 @@ fn main() -> Result<(), Operations> {
     write_microcode();
     write_program(ADDITION);
     write_program(EMPTY);
+
+    let debug_prog: [u8; 256] = (0..=255u8)
+        .collect::<Vec<_>>()
+        .as_slice()
+        .try_into()
+        .unwrap();
+    let f = File::create("../generated/programs/debug.txt").unwrap();
+    write_bytes(debug_prog, f).unwrap();
 
     Ok(())
 }

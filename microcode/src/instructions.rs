@@ -4,8 +4,8 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug, Clone, Copy)]
 pub struct Instruction([Operations; 8]);
 impl Instruction {
-    pub fn steps(self) -> impl Iterator<Item = u16> {
-        self.0.into_iter().map(|op| op.machine_bits())
+    pub fn steps(self) -> impl Iterator<Item = Operations> {
+        self.0.into_iter()
     }
 }
 impl Display for Instruction {
