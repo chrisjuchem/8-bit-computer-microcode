@@ -79,7 +79,7 @@ void dumpEEPROM() {
 const bool HIGH_CHIP = {{ high_chip }};
 
 const PROGMEM uint16_t instructions[2048] = {{ microcode }};
-const PROGMEM byte programs[8][256] {
+const PROGMEM byte programs[8][256] = {
     {{ prog0 }},
     {{ prog1 }},
     {{ prog2 }},
@@ -96,38 +96,41 @@ void writeInstructions() {
     return;
   }
   if (HIGH_CHIP) {
-    Serial.print("[ Writing HI.... ]\n[");
+    Serial.println("[ Writing HI.... ]");
   } else {
-    Serial.print("[ Writing LOW... ]\n[");
+    Serial.println("[ Writing LOW... ]");
   }
+  Serial.print("[                                ]\r[");
 
   for (int n = 0; n < 2048; n++) {
-    uint16_t instr = instructions[n];
+    uint16_t instr = pgm_read_word_near(&instructions[n]);
     if (HIGH_CHIP) {
       instr = instr >> 8;
     }
     writeEEPROM(n, instr ^ 0xff);
 
-    if (n % 32 == 31) {
+    if (n % 64 == 63) {
       Serial.print(".");
     }
   }
-  Serial.println("]");
+  Serial.println("");
 }
 
 void writePrograms() {
-  Serial.print("[ Writing PROGRAMS... ]\n[");
+  Serial.println("[ Writing ROM... ]");
+  Serial.print("[                                ]\r[");
 
   for (int n = 0; n < 8; n++) {
     for (int i = 0; i < 256; i++) {
-      byte instr = programs[n][i];
-      writeEEPROM(n * 256 + i, instr ^ 0xff );
+      byte instr = pgm_read_byte_near(&programs[n][i]);
+      writeEEPROM((n * 256) + i, instr ^ 0xff);
 
-      if (i % 32 == 31) {
+      if (i % 64 == 63) {
         Serial.print(".");
       }
     }
   }
+  Serial.println("");
 }
 
 //=======================================================================
