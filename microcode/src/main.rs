@@ -3,46 +3,59 @@
 
 mod instructions;
 mod operations;
+mod programs;
 
 use crate::instructions::Instructions;
+use crate::programs::{Program, ADDITION, EMPTY};
 use operations::Operations;
+use std::fmt::Display;
+use std::fs::File;
+use std::io::{Error, Write};
 
-fn microcode() {
-    for i in 0u8..=255 {
-        if let Some(code) = Instructions::microcode(i) {
-            println!("    case {}:", i);
-            println!("      return {};", code);
-        }
+fn write_bytes<const N: usize, I: Display>(buf: [I; N], mut f: File) -> Result<(), Error> {
+    f.write("{".as_bytes())?;
+    for i in buf.iter() {
+        f.write(i.to_string().as_bytes())?;
+        f.write(",".as_bytes())?;
     }
-
-    println!("    default:",);
-    println!(
-        "      return {};",
-        Instructions::microcode(Instructions::NOOP.opcode()).unwrap()
-    );
+    f.write("}".as_bytes())?;
+    Ok(())
 }
 
-fn programs() {
-    let mut prog = [0; 256];
-    let mut prog_ref = &mut prog[..];
-
-    prog_ref = Instructions::LDAI { val: 16 }.write_bytes(prog_ref);
-    prog_ref = Instructions::LDBI { val: 1 }.write_bytes(prog_ref);
-    prog_ref = Instructions::ADDA.write_bytes(prog_ref);
-    prog_ref = Instructions::ADDA.write_bytes(prog_ref);
-    prog_ref = Instructions::ADDA.write_bytes(prog_ref);
-    prog_ref = Instructions::ADDA.write_bytes(prog_ref);
-    prog_ref = Instructions::ADDA.write_bytes(prog_ref);
-    Instructions::HALT.write_bytes(prog_ref);
+fn write_microcode() {
+    let mut buf = [0u16; 2048];
+    let noop = Instructions::microcode(Instructions::NOOP.opcode()).unwrap();
 
     for i in 0..=255 {
-        println!("    case {}:", i);
-        println!("      return Instruction{{ {},0,0,0,0,0,0,0 }};", prog[i]);
+        let code = Instructions::microcode(i).unwrap_or(noop);
+        code.steps()
+            .enumerate()
+            .for_each(|(n, instr)| buf[n * 256 + (i as usize)] = instr)
     }
+
+    let f = File::create("../generated/microcode.txt").unwrap();
+    write_bytes(buf, f).unwrap();
+}
+
+fn write_program<const N: usize>(prog: Program<N>) {
+    let mut bytes = [0; 256];
+    let mut bytes_ref = &mut bytes[..];
+
+    for instr in prog.instructions {
+        bytes_ref = instr.write_bytes(bytes_ref)
+    }
+    while bytes_ref.len() > 0 {
+        bytes_ref = Instructions::NOOP.write_bytes(bytes_ref);
+    }
+
+    let f = File::create(format!("../generated/programs/{}.txt", prog.name)).unwrap();
+    write_bytes(bytes, f).unwrap();
 }
 
 fn main() -> Result<(), Operations> {
-    programs();
+    write_microcode();
+    write_program(ADDITION);
+    write_program(EMPTY);
 
     Ok(())
 }

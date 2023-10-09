@@ -1,5 +1,4 @@
-use bitflags::{bitflags, Flags};
-use std::ops::BitOr;
+use bitflags::bitflags;
 
 bitflags! {
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -77,7 +76,6 @@ bitflags! {
 
 mod _asserts {
     use super::Operations;
-    use bitflags::Flags;
 
     const _: () = {
         assert!(

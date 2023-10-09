@@ -1,9 +1,7 @@
-use std::fmt::{Display, Formatter, Write};
-// use crate::operations::*;
 use crate::Operations;
-use bitflags::Flags;
+use std::fmt::{Display, Formatter};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Instruction([Operations; 8]);
 impl Instruction {
     pub fn steps(self) -> impl Iterator<Item = u16> {
@@ -46,7 +44,7 @@ macro_rules! i {
     };
 
     {@ [$( $o1:ident $( | $op:ident )* ),*]} => {
-        Instruction([$( Operations::$o1 $(.union(Operations::$op))* ),*]);
+        Instruction([$( Operations::$o1 $(.union(Operations::$op))* ),*])
     };
 }
 
@@ -62,7 +60,7 @@ macro_rules! instructions {
         impl Instructions {
             pub fn opcode(&self) -> u8 {
                 match self {
-                    $(Instructions::$INS $({ $($arg),* })? => $n),*
+                    $(Instructions::$INS $({ $($arg),*: _ })? => $n),*
                 }
             }
 
@@ -96,4 +94,6 @@ instructions! {
     LDBI{val: u8} = 2, [CO|MI, RO|BI|CE];
     ADDA = 3, [EO|AI];
     HALT = 255, [HL];
+
+    DEBUG = 200, [CO|II];
 }
