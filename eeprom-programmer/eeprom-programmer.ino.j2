@@ -76,56 +76,19 @@ void dumpEEPROM() {
 
 //=======================================================================
 
-#define CO 0b00100000 << 8
-#define RO 0b01000000 << 8
-#define TEST1O 0b01100000 << 8
-#define TEST2O 0b10000000 << 8
-#define EO 0b10100000 << 8
-#define AO 0b11000000 << 8
-#define BO 0b11100000 << 8
+const bool HIGH_CHIP = {{ high_chip }};
 
-#define J  0b00001000 << 8
-#define JZ 0b00010000 << 8
-#define JC 0b00011000 << 8
-
-#define II 0b00000100 << 8
-#define MI 0b00000010 << 8
-#define RI 0b00000001 << 8
-
-
-#define AI 0b10000000
-#define BI 0b01000000
-#define OI 0b00100000
-//#define  0b00010000
-#define SR 0b00001000
-#define CE 0b00000100
-#define SU 0b00000010
-#define HL 0b00000001
-
-const bool HIGH_CHIP = false;
-
-struct Instruction {
-  uint16_t getStep(byte stp){ return this->steps[stp]; }
-  uint16_t steps[8];
+const PROGMEM uint16_t instructions[2048] = {{ microcode }};
+const PROGMEM byte programs[8][256] {
+    {{ prog0 }},
+    {{ prog1 }},
+    {{ prog2 }},
+    {{ prog3 }},
+    {{ prog4 }},
+    {{ prog5 }},
+    {{ prog6 }},
+    {{ prog7 }},
 };
-
-struct Instruction getInstruction(byte op) {
-  switch(op) {
-    case 0: // 0x00 TESTING
-//      return Instruction{ 0, TEST2O|II, AO|J|MI, BO|JZ|RI, EO|II, TEST1O|II|MI|J, CO|JC|MI|RI, RO|RI|JZ };
-      return Instruction{ 0, TEST2O, AO, BO, EO, TEST1O, CO, RO };
-
-    case 0x10:
-      return Instruction{ CO|II, CE, CO|BI, 0, 0, 0, 0, 0};
-    case 0x11:
-      return Instruction{ CO|II, CE, CO|AI, SU|EO|BI, 0, 0, 0, 0};
-  
-    
-    default:
-        return Instruction{ CO|II, CE, EO|AI, 0, 0, 0, 0, 0};
-//      return Instruction{ CO|MI, RO|II|CE, 0, 0, 0, 0, 0, 0 };
-  }
-}
 
 void writeInstructions() {
   if (BIG_CHIP) {
@@ -137,22 +100,35 @@ void writeInstructions() {
   } else {
     Serial.print("[ Writing LOW... ]\n[");
   }
-  for (int op = 0; op < 256; op++) {
-    Instruction instr = getInstruction(op);
-    for (int stp = 0; stp < 8; stp++) {
-      uint16_t step_instr = instr.getStep(stp);
-      if (HIGH_CHIP) {
-        step_instr = step_instr >> 8;
-      }
-      writeEEPROM(op + (stp << 8), 0xff ^ step_instr);
+
+  for (int n = 0; n < 2048; n++) {
+    uint16_t instr = instructions[n];
+    if (HIGH_CHIP) {
+      instr = instr >> 8;
     }
-    if (op % 16 == 15) {
+    writeEEPROM(n, instr ^ 0xff);
+
+    if (n % 32 == 31) {
       Serial.print(".");
     }
   }
   Serial.println("]");
 }
 
+void writePrograms() {
+  Serial.print("[ Writing PROGRAMS... ]\n[");
+
+  for (int n = 0; n < 8; n++) {
+    for (int i = 0; i < 256; i++) {
+      byte instr = programs[n][i];
+      writeEEPROM(n * 256 + i, instr ^ 0xff );
+
+      if (i % 32 == 31) {
+        Serial.print(".");
+      }
+    }
+  }
+}
 
 //=======================================================================
 
@@ -165,15 +141,18 @@ void setupPins() {
   digitalWrite(EEPROM_ENABLE, HIGH); //disable chip by default
 }
 
+const bool ROM_CHIP = {{ rom_chip }};
+
 void setup() {
   Serial.begin(115200);
   setupPins();
 
 
-//  for (int i = 0; i <= 255; i += 1) {
-//    writeEEPROM(i, (i+3)%32);
-//  }
-  writeInstructions();
+  if (ROM_CHIP) {
+    writePrograms();
+  } else {
+    writeInstructions();
+  }
   dumpEEPROM();
 }
 
